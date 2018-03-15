@@ -1,0 +1,42 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=8,walltime=24:00:00
+#PBS -N app-bids-hcppipeline-preFS
+
+T1=`jq -r '.t1' config.json`
+T2=`jq -r '.t2' config.json`
+
+sub=$(jq -r "._inputs[0].meta.subject" config.json | tr -d "_")
+if [[ -z $sub || $sub == null ]]; then
+    sub=0
+fi
+bids_sub=sub-$sub
+#ses=$(jq -r "._inputs[0].meta.session" config.json | tr -d "_")
+#if [[ -n $ses && $ses != null ]]; then
+#    bids_sub=${bids_sub}_ses-$ses
+#fi
+
+#clean up previous job (just in case)
+rm -rf ${bids_sub} output input
+
+#organizing brainlife input to bids structure
+mkdir -p input/${bids_sub}/anat
+
+#let's cp because ln is problematic when relative path is used
+cp $T1 input/${bids_sub}/anat/${bids_sub}_T1w.nii.gz
+cp $T2 input/${bids_sub}/anat/${bids_sub}_T2w.nii.gz
+
+#make BIDS json sidecar
+jq '._inputs[] | select(.id == "t1") | .meta' config.json > input/${bids_sub}/anat/${bids_sub}_T1w.json
+jq '._inputs[] | select(.id == "t2") | .meta' config.json > input/${bids_sub}/anat/${bids_sub}_T2w.json
+
+singularity exec docker://soichih/hcppipeline \
+    python /run.py --n_cpus 8 --stages PreFreeSurfer \
+    --license_key "$FREESURFER_LICENSE" input ./ participant
+
+#check for final output file
+if [[ -d ${bids_sub} ]]; then
+    mv ${bids_sub} output
+    exit 0   
+else
+    exit 1
+fi
