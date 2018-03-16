@@ -2,6 +2,7 @@
 #PBS -l nodes=1:ppn=8,walltime=24:00:00
 #PBS -N app-bids-hcppipeline-preFS
 
+stage=PreFreeSurfer
 T1=`jq -r '.t1' config.json`
 T2=`jq -r '.t2' config.json`
 
@@ -30,12 +31,18 @@ jq '._inputs[] | select(.id == "t1") | .meta' config.json > input/${bids_sub}/an
 jq '._inputs[] | select(.id == "t2") | .meta' config.json > input/${bids_sub}/anat/${bids_sub}_T2w.json
 
 singularity exec docker://soichih/hcppipeline \
-    python /run.py --n_cpus 8 --stages PreFreeSurfer \
-    --license_key "$FREESURFER_LICENSE" input ./ participant
+    python /run.py input ./ participant \
+        --n_cpus 8 --stages $stage \
+        --license_key "$FREESURFER_LICENSE" \
+        --participant_label $sub
+
+#debug
+ls ${bids_sub}/T1w
 
 #check for final output file
 if [[ -d ${bids_sub} ]]; then
     mv ${bids_sub} output
+    rm -rf input
     exit 0   
 else
     exit 1
