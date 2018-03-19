@@ -36,9 +36,6 @@ singularity exec docker://soichih/hcppipeline \
         --license_key "$FREESURFER_LICENSE" \
         --participant_label $sub
 
-#debug
-ls ${bids_sub}/T1w
-
 #check for final output file
 if [[ -d ${bids_sub} ]]; then
     mv ${bids_sub} output
