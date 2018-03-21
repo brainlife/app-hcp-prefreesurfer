@@ -39,8 +39,6 @@ singularity exec docker://soichih/hcppipeline \
 #check for final output file
 if [[ -d ${bids_sub} ]]; then
     mv ${bids_sub} output
-    echo "output from PreFS (ls output)"
-    ls output
     rm -rf input
     exit 0   
 else
