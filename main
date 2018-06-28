@@ -30,7 +30,7 @@ cp $T2 input/${bids_sub}/anat/${bids_sub}_T2w.nii.gz
 jq '._inputs[] | select(.id == "t1") | .meta' config.json > input/${bids_sub}/anat/${bids_sub}_T1w.json
 jq '._inputs[] | select(.id == "t2") | .meta' config.json > input/${bids_sub}/anat/${bids_sub}_T2w.json
 
-singularity exec -e docker://soichih/hcppipeline \
+singularity exec -e docker://brainlife/hcppipelines:0.1 \
     python /run.py input ./ participant \
         --n_cpus 8 --stages $stage \
         --license_key "$FREESURFER_LICENSE" \
